@@ -2,25 +2,15 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
-@st.cache_data
-def load_data_from_drive(file_id):
-    # Chuyển đổi link Drive thành link tải trực tiếp (direct download link)
-    download_url = f"https://drive.google.com/uc?id={file_id}"
-    
-    # Đọc dữ liệu (Đổi read_csv thành read_excel nếu là file .xlsx)
-    df = pd.read_csv(download_url) 
-    return df
+import os
+import gdown
 
-# Thay thế bằng ID file của bạn ở Bước 1
-FILE_ID = "1nAlUWEsaxqOSGEP23nJxn9h3VQYU441L" # <--- THAY ID CỦA BẠN VÀO ĐÂY
-
-st.write("Đang tải dữ liệu từ Google Drive...")
-
-try:
-    # Lấy dữ liệu
-    df = load_data_from_drive(FILE_ID)
-    
-    st.success("Tải dữ liệu thành công!")
+# --- CẤU HÌNH LIÊN KẾT GOOGLE DRIVE ---
+# Thay đổi chuỗi bên dưới thành ID file của bạn trên Google Drive.
+# Ví dụ link: https://drive.google.com/file/d/1abc123XYZ.../view?usp=sharing
+# Thì ID chính là đoạn: 1abc123XYZ...
+MODEL_DRIVE_ID = "1nAlUWEsaxqOSGEP23nJxn9h3VQYU441L"
+MODEL_FILENAME = "EfficientNetB7_CatDog.h5"
 
 # Cấu hình trang
 st.set_page_config(page_title="AI Nhận diện Chó Mèo", page_icon="🐶", layout="centered")
@@ -28,21 +18,41 @@ st.set_page_config(page_title="AI Nhận diện Chó Mèo", page_icon="🐶", la
 st.title("🐶🐱 Trợ lý AI Nhận diện Chó & Mèo")
 st.markdown("Tải một bức ảnh lên và AI (EfficientNetB7) sẽ cho bạn biết đó là chó hay mèo!")
 
-# Hàm tải mô hình (Dùng cache_resource để load model 1 lần duy nhất, tránh nặng máy)
+# Hàm tải file từ Drive
+def download_model_from_drive(file_id, output_name):
+    # Chỉ tải xuống nếu file chưa tồn tại trên máy chủ (tiết kiệm thời gian)
+    if not os.path.exists(output_name):
+        url = f'https://drive.google.com/uc?id={file_id}'
+        try:
+            # gdown giúp tải file dung lượng lớn bỏ qua cảnh báo diệt virus của Google
+            gdown.download(url, output_name, quiet=False)
+        except Exception as e:
+            st.error(f"Lỗi khi tải mô hình từ Drive: {e}")
+            return None
+    return output_name
+
+# Hàm tải mô hình vào bộ nhớ AI (Dùng cache_resource để load model 1 lần duy nhất)
 @st.cache_resource
 def load_ai_model():
-    # Tên file model phải khớp với file bạn lưu từ Colab
-    model_path = 'EfficientNetB7_CatDog.h5'
-    model = tf.keras.models.load_model(model_path)
-    return model
+    # 1. Gọi hàm tải file từ Drive về máy chủ trước
+    model_path = download_model_from_drive(MODEL_DRIVE_ID, MODEL_FILENAME)
+    
+    # 2. Đọc file model bằng TensorFlow
+    if model_path and os.path.exists(model_path):
+        model = tf.keras.models.load_model(model_path)
+        return model
+    return None
 
-# Tải model
+# Khởi tạo model
 try:
-    with st.spinner("Đang tải mô hình AI, vui lòng đợi vài giây..."):
+    with st.spinner("Đang tải và chuẩn bị mô hình AI (Lần đầu có thể mất 1-3 phút)..."):
         model = load_ai_model()
+        if model is None:
+            st.error("⚠️ KHÔNG TÌM THẤY MÔ HÌNH AI!")
+            st.info("Hãy kiểm tra lại MODEL_DRIVE_ID và quyền chia sẻ file trên Google Drive.")
+            st.stop()
 except Exception as e:
-    st.error(f"⚠️ KHÔNG TÌM THẤY MÔ HÌNH AI!")
-    st.info("Vui lòng tải file 'EfficientNetB7_CatDog.h5' từ Google Drive của bạn và đặt vào cùng thư mục với file app.py này.")
+    st.error(f"⚠️ CÓ LỖI XẢY RA TRONG QUÁ TRÌNH TẢI MÔ HÌNH: {e}")
     st.stop() # Dừng chạy app nếu không có model
 
 # Tạo giao diện upload ảnh
