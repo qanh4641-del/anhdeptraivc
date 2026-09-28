@@ -2,6 +2,25 @@ import streamlit as st
 import tensorflow as tf
 import numpy as np
 from PIL import Image
+@st.cache_data
+def load_data_from_drive(file_id):
+    # Chuyển đổi link Drive thành link tải trực tiếp (direct download link)
+    download_url = f"https://drive.google.com/uc?id={file_id}"
+    
+    # Đọc dữ liệu (Đổi read_csv thành read_excel nếu là file .xlsx)
+    df = pd.read_csv(download_url) 
+    return df
+
+# Thay thế bằng ID file của bạn ở Bước 1
+FILE_ID = "1a2b3c4d5e6f7g8h9i0j_XYZ" # <--- THAY ID CỦA BẠN VÀO ĐÂY
+
+st.write("Đang tải dữ liệu từ Google Drive...")
+
+try:
+    # Lấy dữ liệu
+    df = load_data_from_drive(FILE_ID)
+    
+    st.success("Tải dữ liệu thành công!")
 
 # Cấu hình trang
 st.set_page_config(page_title="AI Nhận diện Chó Mèo", page_icon="🐶", layout="centered")
