@@ -12,7 +12,7 @@ def load_data_from_drive(file_id):
     return df
 
 # Thay thế bằng ID file của bạn ở Bước 1
-FILE_ID = "1a2b3c4d5e6f7g8h9i0j_XYZ" # <--- THAY ID CỦA BẠN VÀO ĐÂY
+FILE_ID = "1nAlUWEsaxqOSGEP23nJxn9h3VQYU441L" # <--- THAY ID CỦA BẠN VÀO ĐÂY
 
 st.write("Đang tải dữ liệu từ Google Drive...")
 
