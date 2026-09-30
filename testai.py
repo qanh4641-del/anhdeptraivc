@@ -79,7 +79,7 @@ if uploaded_file is not None:
                 st.markdown("---")
                 
                 # NGƯỠNG TIN CẬY (Threshold): Có thể điều chỉnh số 75.0 cao hay thấp tùy ý
-                THRESHOLD = 50.0 
+                THRESHOLD = 50.2 
                 
                 if confidence_cat >= THRESHOLD:
                     st.success(f"🎉 **Kết quả:** AI dự đoán đây là **MÈO 🐱**")
